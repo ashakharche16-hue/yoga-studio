@@ -593,7 +593,7 @@ function AdminDash({ config, onSave, onExit }) {
         </label>
         <input
           type={type}
-          value={value}
+          defaultValue={value}
           onChange={(e) => upd(path, e.target.value)}
           placeholder={placeholder}
           style={S.input}
