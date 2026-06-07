@@ -2771,14 +2771,18 @@ export default function App() {
   useEffect(() => {
     (async () => {
       const stored = await loadCfg();
-      if (stored) setConfig({ ...DEF, ...stored });
+      if (stored) setConfig(mergeConfig(DEF, stored));
+      else setConfig(DEF);
       setView("site");
     })();
   }, []);
 
   const handleSave = async (newCfg) => {
     setConfig(newCfg);
-    await saveCfg(newCfg);
+    const savedRemotely = await saveCfg(newCfg);
+    if (!savedRemotely) {
+      console.warn("Remote config save failed. Changes are stored locally only.");
+    }
   };
 
   if (view === "loading")
