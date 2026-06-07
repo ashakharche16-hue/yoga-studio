@@ -1,4 +1,7 @@
+import dotenv from "dotenv";
 import { Pool } from "pg";
+
+dotenv.config();
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
@@ -14,8 +17,8 @@ const pool = new Pool({
 const DEFAULT_CONFIG = {
   password: "Yogawithp123#",
   business: {
-    coachName: "Pallavi Vaibhav Kharchhe",
-    short: "Pallavi Kharchhe",
+    coachName: "Pallavi Vaibhav Kharche",
+    short: "Pallavi Kharche",
     role: "Certified Fitness Coach and Nutritionist",
     roleMr: "प्रमाणित फिटनेस प्रशिक्षक व पोषणतज्ज्ञ",
     phone: "8329077521",

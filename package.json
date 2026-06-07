@@ -10,8 +10,9 @@
     "db:seed": "node scripts/loadInitialData.js"
   },
   "dependencies": {
-    "pg": "^8.11.0",
+    "dotenv": "^17.4.2",
     "lucide-react": "^0.525.0",
+    "pg": "^8.11.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
