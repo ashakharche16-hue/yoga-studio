@@ -3,13 +3,9 @@ import { Pool } from "pg";
 const DATABASE_URL = process.env.DATABASE_URL;
 const CONFIG_NAME = "site_config";
 
-if (!DATABASE_URL) {
-  throw new Error("DATABASE_URL is required for database-backed config.");
-}
-
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
 let tableReady = false;
@@ -25,6 +21,10 @@ async function ensureTable() {
 }
 
 const parseRequestBody = async (req) => {
+  if (typeof req.json === "function") {
+    return await req.json();
+  }
+
   const chunks = [];
   for await (const chunk of req) {
     chunks.push(chunk);
@@ -35,6 +35,10 @@ const parseRequestBody = async (req) => {
 
 export default async function handler(req, res) {
   try {
+    if (!DATABASE_URL) {
+      return res.status(500).json({ error: "Missing DATABASE_URL in runtime environment." });
+    }
+
     await ensureTable();
 
     if (req.method === "GET") {
