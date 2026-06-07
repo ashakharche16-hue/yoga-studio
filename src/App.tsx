@@ -198,21 +198,60 @@ const DEF = {
    STORAGE
 ═══════════════════════════════════════════════════════════ */
 const SK = "yoga-studio-config";
+const API_ENDPOINT = "/api/config";
+function mergeConfig(base, override) {
+  if (!override || typeof override !== "object") return base;
+  const result = Array.isArray(base) ? [...base] : { ...base };
+  Object.entries(override).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      result[key] = value.slice();
+    } else if (value && typeof value === "object") {
+      result[key] = mergeConfig(base?.[key] ?? {}, value);
+    } else {
+      result[key] = value;
+    }
+  });
+  return result;
+}
 async function loadCfg() {
   try {
-    const v = window.localStorage.getItem(SK);
-    return v ? JSON.parse(v) : null;
+    const res = await fetch(API_ENDPOINT, { cache: "no-store" });
+    if (res.ok) {
+      const cfg = await res.json();
+      return mergeConfig(DEF, cfg);
+    }
   } catch (e) {
+    console.warn("Remote config load failed, falling back to localStorage:", e);
+  }
+
+  try {
+    const v = window.localStorage.getItem(SK);
+    return v ? mergeConfig(DEF, JSON.parse(v)) : null;
+  } catch (e) {
+    console.warn("Failed to load saved config from localStorage:", e);
     return null;
   }
 }
 async function saveCfg(cfg) {
+  let savedRemotely = false;
+  try {
+    const res = await fetch(API_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(cfg),
+    });
+    savedRemotely = res.ok;
+  } catch (e) {
+    console.warn("Remote config save failed, storing locally:", e);
+  }
+
   try {
     window.localStorage.setItem(SK, JSON.stringify(cfg));
-    return true;
   } catch (e) {
-    return false;
+    console.warn("Failed to save config to localStorage:", e);
   }
+
+  return savedRemotely;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -545,20 +584,23 @@ function AdminDash({ config, onSave, onExit }) {
     </button>
   );
 
-  const Field = ({ label, path, type = "text", placeholder = "" }) => (
-    <div>
-      <label style={S.label} className="bc">
-        {label}
-      </label>
-      <input
-        type={type}
-        defaultValue={path.split(".").reduce((o, k) => o?.[k], getCfg()) || ""}
-        onChange={(e) => upd(path, e.target.value)}
-        placeholder={placeholder}
-        style={S.input}
-      />
-    </div>
-  );
+  const Field = ({ label, path, type = "text", placeholder = "" }) => {
+    const value = path.split(".").reduce((o, k) => o?.[k], getCfg()) ?? "";
+    return (
+      <div>
+        <label style={S.label} className="bc">
+          {label}
+        </label>
+        <input
+          type={type}
+          value={value}
+          onChange={(e) => upd(path, e.target.value)}
+          placeholder={placeholder}
+          style={S.input}
+        />
+      </div>
+    );
+  };
 
   return (
     <div style={S.wrap}>
